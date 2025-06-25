@@ -1,4 +1,3 @@
-
 let startTime = null;
 let stopTime = null;
 let timerInterval = null;
@@ -8,98 +7,105 @@ const timerStatusText = document.getElementById('timer-status-text');
 const startButton = document.getElementById('startButton');
 const stopButton = document.getElementById('stopButton');
 const jobStatusDropdown = document.getElementById('jobStatus');
+const jobDifficultyDropdown = document.getElementById('jobDifficulty');
 const sessionHistoryList = document.getElementById('sessionHistoryList');
 const clearHistoryBtn = document.getElementById('clearHistoryBtn');
 const toggleHistoryBtn = document.getElementById('toggleHistoryBtn');
 const sessionHistoryContainer = document.getElementById('sessionHistoryContainer');
+const downloadCsvBtn = document.getElementById('downloadCsvBtn'); // Assuming you have a button with this ID for CSV download
 
 function formatTime(ms) {
-  const totalSeconds = Math.floor(ms / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  const milliseconds = ms % 1000;
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    const milliseconds = ms % 1000;
 
-  const pad = n => String(n).padStart(2, '0');
-  const padMs = n => String(n).padStart(3, '0');
-  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}.${padMs(milliseconds)}`;
+    const pad = n => String(n).padStart(2, '0');
+    const padMs = n => String(n).padStart(3, '0');
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}.${padMs(milliseconds)}`;
 }
 
 function updateTimerDisplay() {
-  if (startTime) {
-    const now = Date.now();
-    const elapsed = now - startTime;
-    timerDisplay.textContent = formatTime(elapsed);
-  }
+    if (startTime) {
+        const now = Date.now();
+        const elapsed = now - startTime;
+        timerDisplay.textContent = formatTime(elapsed);
+    }
 }
 
 function startTimer() {
-  if (timerInterval) clearInterval(timerInterval);
-  startTime = Date.now();
-  stopTime = null;
-  timerDisplay.textContent = '00:00:00.000';
-  timerStatusText.textContent = 'Timer running...';
-  startButton.disabled = true;
-  stopButton.disabled = false;
+    if (timerInterval) clearInterval(timerInterval);
+    startTime = Date.now();
+    stopTime = null;
+    timerDisplay.textContent = '00:00:00.000';
+    timerStatusText.textContent = 'Timer running...';
+    startButton.disabled = true;
+    stopButton.disabled = false;
 
-  timerInterval = setInterval(updateTimerDisplay, 10);
+    timerInterval = setInterval(updateTimerDisplay, 10);
 }
 
 function stopTimer() {
-  if (!startTime) return;
-  clearInterval(timerInterval);
-  stopTime = Date.now();
-  timerStatusText.textContent = 'Timer stopped.';
-  startButton.disabled = false;
-  stopButton.disabled = true;
+    if (!startTime) return;
+    clearInterval(timerInterval);
+    stopTime = Date.now();
+    timerStatusText.textContent = 'Timer stopped.';
+    startButton.disabled = false;
+    stopButton.disabled = true;
 
-  const agentName = document.getElementById('agentName').value || 'N/A';
-  const jobNo = document.getElementById('jobNo').value || 'N/A';
-  const jobStatus = jobStatusDropdown.value || 'N/A';
-  const jobDifficultyDropdown = document.getElementById('jobDifficulty');
-  const jobDifficulty = jobDifficultyDropdown.value || 'N/A';
+    // Use .value || 'N/A' for inputs and dropdowns, assuming empty string for unselected
+    const agentName = document.getElementById('agentName').value.trim() || 'N/A'; // Trim to handle whitespace
+    const jobNo = document.getElementById('jobNo').value.trim() || 'N/A';       // Trim to handle whitespace
+    const jobStatus = jobStatusDropdown.value || 'N/A';
+    const jobDifficulty = jobDifficultyDropdown.value || 'N/A';
 
-  const startStr = new Date(startTime).toLocaleString();
-  const stopStr = new Date(stopTime).toLocaleString();
-  const ahtSeconds = ((stopTime - startTime) / 1000).toFixed(2);
+    const startStr = new Date(startTime).toLocaleString();
+    const stopStr = new Date(stopTime).toLocaleString();
+    const ahtSeconds = ((stopTime - startTime) / 1000).toFixed(2);
 
-  const entry = {
-    agentName,
-    jobNo,
-    jobStatus,
-    jobDifficulty,
-    startStr,
-    stopStr,
-    ahtSeconds
-  };
+    const entry = {
+        agentName,
+        jobNo,
+        jobStatus,
+        jobDifficulty,
+        startStr,
+        stopStr,
+        ahtSeconds
+    };
 
-  saveSessionEntry(entry);
-  renderSessionHistory();
-  resetForm();
+    saveSessionEntry(entry);
+    renderSessionHistory();
+    resetForm();
 
-  fetch('https://script.google.com/macros/s/AKfycbypZz8qf1w4XGDeHOPfzo5lO29OLjhJRhupKYnBM0h9/dev', {
-    method: 'POST',
-    body: JSON.stringify(entry),
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  }).then(res => res.text())
-    .then(msg => console.log('Google Sheet Response:', msg))
-    .catch(err => console.error('Failed to send data to Google Sheets:', err));
+    fetch('https://script.google.com/macros/s/AKfycbypZz8qf1w4XGDeHOPfzo5lO29OLjhJRhupKYnBM0h9/dev', {
+        method: 'POST',
+        body: JSON.stringify(entry),
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(res => res.text())
+        .then(msg => console.log('Google Sheet Response:', msg))
+        .catch(err => console.error('Failed to send data to Google Sheets:', err));
 }
 
 function saveSessionEntry(entry) {
-  const existing = JSON.parse(localStorage.getItem('sessionHistory') || '[]');
-  existing.unshift(entry);
-  localStorage.setItem('sessionHistory', JSON.stringify(existing));
+    const existing = JSON.parse(localStorage.getItem('sessionHistory') || '[]');
+    existing.unshift(entry);
+    localStorage.setItem('sessionHistory', JSON.stringify(existing));
 }
 
 function updateEntryField(index, key, value) {
-  const history = JSON.parse(localStorage.getItem('sessionHistory') || '[]');
-  if (history[index]) {
-    history[index][key] = value;
-    localStorage.setItem('sessionHistory', JSON.stringify(history));
-  }
+    const history = JSON.parse(localStorage.getItem('sessionHistory') || '[]');
+    if (history[index]) {
+        // Ensure that empty strings are saved as 'N/A' for agentName and jobNo
+        if (key === 'agentName' || key === 'jobNo') {
+            history[index][key] = value.trim() || 'N/A';
+        } else {
+            history[index][key] = value;
+        }
+        localStorage.setItem('sessionHistory', JSON.stringify(history));
+    }
 }
 
 function renderSessionHistory() {
@@ -111,19 +117,13 @@ function renderSessionHistory() {
     if (!sessionHistoryHeader) {
         sessionHistoryHeader = document.createElement('ul');
         sessionHistoryHeader.id = 'sessionHistoryHeader';
-        // Add classes for sticky positioning, background, z-index, padding, border, and BORDER-RADIUS
-        // Applying rounded-t-lg here for the top corners of the sticky header itself
         sessionHistoryHeader.className = 'sticky top-0 bg-gray-100 z-10 py-2 border-b border-gray-300 rounded-t-lg';
-        // Insert it before the main sessionHistoryList
         sessionHistoryContainer.insertBefore(sessionHistoryHeader, sessionHistoryList);
     }
 
-    // Clear previous header content before rendering new
     sessionHistoryHeader.innerHTML = '';
 
-    // Header row - This LI will now be contained within the rounded UL
     const header = document.createElement('li');
-    // We don't add border-radius or background here, as the parent UL handles it
     header.className = 'grid grid-cols-6 gap-2 text-xs font-bold text-gray-600 px-1 min-w-[520px]';
     header.innerHTML = `
         <span class="text-center">Name</span>
@@ -133,8 +133,7 @@ function renderSessionHistory() {
         <span class="text-center">AHT</span>
         <span class="text-center">Action</span>
     `;
-    sessionHistoryHeader.appendChild(header); // Append to the new header UL
-
+    sessionHistoryHeader.appendChild(header);
 
     if (history.length === 0) {
         const empty = document.createElement('li');
@@ -150,11 +149,42 @@ function renderSessionHistory() {
 
         const li = document.createElement('li');
         li.className =
-            'group grid grid-cols-6 gap-2 items-center bg-white border p-1 rounded text-xs transition-colors duration-200 min-w-[520px]';
+            'group grid grid-cols-6 gap-2 items-center bg-white border p-1 rounded text-xs transition-all duration-300 ease-out min-w-[520px]';
 
+        // Agent Name Input Field (Editable)
+        const agentNameInput = document.createElement('input');
+        agentNameInput.type = 'text';
+        agentNameInput.value = entry.agentName; // Set initial value from history
+        agentNameInput.className = 'border rounded px-1 py-0.5 w-full text-center truncate';
+        agentNameInput.placeholder = 'N/A'; // Visual hint for empty state
+        agentNameInput.addEventListener('change', (e) => { // 'change' event fires on commit (enter or blur)
+            updateEntryField(index, 'agentName', e.target.value);
+        });
+        agentNameInput.addEventListener('blur', (e) => { // 'blur' event fires when focus leaves
+            updateEntryField(index, 'agentName', e.target.value);
+        });
+
+
+        // Job No Input Field (Editable)
+        const jobNoInput = document.createElement('input');
+        jobNoInput.type = 'text';
+        jobNoInput.value = entry.jobNo; // Set initial value from history
+        jobNoInput.className = 'border rounded px-1 py-0.5 w-full text-center truncate';
+        jobNoInput.placeholder = 'N/A'; // Visual hint for empty state
+        jobNoInput.addEventListener('change', (e) => { // 'change' event fires on commit (enter or blur)
+            updateEntryField(index, 'jobNo', e.target.value);
+        });
+        jobNoInput.addEventListener('blur', (e) => { // 'blur' event fires when focus leaves
+            updateEntryField(index, 'jobNo', e.target.value);
+        });
+
+
+        // STATUS DROPDOWN LOGIC
         const statusDropdown = document.createElement('select');
         statusDropdown.className = 'border rounded px-1 py-0.5 w-full';
-        ['On-going', 'Pending', 'Completed', 'Reviewed', 'Rejected', 'On-hold', 'Awaiting Feedback', 'In Progress'].forEach(opt => {
+        // Include 'N/A' as a selectable option in the history dropdown for completeness
+        const statusOptions = ['N/A', 'On-going', 'Pending', 'Completed', 'Reviewed', 'Rejected', 'On-hold', 'Awaiting Feedback', 'In Progress'];
+        statusOptions.forEach(opt => {
             const option = document.createElement('option');
             option.value = opt;
             option.textContent = opt;
@@ -165,9 +195,12 @@ function renderSessionHistory() {
             updateEntryField(index, 'jobStatus', statusDropdown.value);
         });
 
+        // DIFFICULTY DROPDOWN LOGIC
         const difficultyDropdown = document.createElement('select');
         difficultyDropdown.className = 'border rounded px-1 py-0.5 w-full';
-        ['Easy', 'Moderate', 'Hard', 'Very Hard'].forEach(opt => {
+        // Include 'N/A' as a selectable option in the history dropdown for completeness
+        const difficultyOptions = ['N/A', 'Easy', 'Moderate', 'Hard', 'Very Hard'];
+        difficultyOptions.forEach(opt => {
             const option = document.createElement('option');
             option.value = opt;
             option.textContent = opt;
@@ -178,9 +211,10 @@ function renderSessionHistory() {
             updateEntryField(index, 'jobDifficulty', difficultyDropdown.value);
         });
 
+        // Construct the list item's inner HTML and prepare containers for appending elements
         li.innerHTML = `
-            <span class="truncate text-center">${entry.agentName}</span>
-            <span class="truncate text-center">${entry.jobNo}</span>
+            <span id="agentName-container-${index}" class="flex justify-center items-center"></span>
+            <span id="jobNo-container-${index}" class="flex justify-center items-center"></span>
             <span id="status-container-${index}" class="flex justify-center items-center"></span>
             <span id="difficulty-container-${index}" class="flex justify-center items-center"></span>
             <span class="text-center">${ahtFormatted}</span>
@@ -192,6 +226,10 @@ function renderSessionHistory() {
         `;
 
         sessionHistoryList.appendChild(li);
+
+        // Append the input fields and dropdowns to their respective containers
+        document.getElementById(`agentName-container-${index}`).appendChild(agentNameInput);
+        document.getElementById(`jobNo-container-${index}`).appendChild(jobNoInput);
         document.getElementById(`status-container-${index}`).appendChild(statusDropdown);
         document.getElementById(`difficulty-container-${index}`).appendChild(difficultyDropdown);
     });
@@ -199,42 +237,47 @@ function renderSessionHistory() {
 
 
 function deleteSession(index) {
-  const history = JSON.parse(localStorage.getItem('sessionHistory') || '[]');
-  history.splice(index, 1);
-  localStorage.setItem('sessionHistory', JSON.stringify(history));
-  renderSessionHistory();
+    const history = JSON.parse(localStorage.getItem('sessionHistory') || '[]');
+    history.splice(index, 1);
+    localStorage.setItem('sessionHistory', JSON.stringify(history));
+    renderSessionHistory();
 }
 
 function clearSessionHistory() {
-  localStorage.removeItem('sessionHistory');
-  renderSessionHistory();
+    localStorage.removeItem('sessionHistory');
+    renderSessionHistory();
 }
 
 function resetForm() {
-  document.getElementById('agentName').value = '';
-  document.getElementById('jobNo').value = '';
-  jobStatusDropdown.value = '';
-  timerDisplay.textContent = '00:00:00.000';
-  timerStatusText.textContent = 'Ready to start';
-  startButton.disabled = false;
-  stopButton.disabled = true;
-  startTime = null;
-  stopTime = null;
-  clearInterval(timerInterval);
-  timerInterval = null;
+    document.getElementById('agentName').value = '';
+    document.getElementById('jobNo').value = '';
+    jobStatusDropdown.value = ''; // Set to empty string to show "Select Job Status" placeholder
+    jobDifficultyDropdown.value = ''; // Set to empty string to show "Difficulty" placeholder
+    timerDisplay.textContent = '00:00:00.000';
+    timerStatusText.textContent = 'Ready to start';
+    startButton.disabled = false;
+    stopButton.disabled = true;
+    startTime = null;
+    stopTime = null;
+    clearInterval(timerInterval);
+    timerInterval = null;
 }
 
 toggleHistoryBtn.addEventListener('click', () => {
-  const isHidden = sessionHistoryContainer.classList.toggle('hidden');
-  toggleHistoryBtn.textContent = isHidden ? 'Show Session History' : 'Hide Session History';
+    const isHidden = sessionHistoryContainer.classList.toggle('hidden');
+    toggleHistoryBtn.textContent = isHidden ? 'Show Session History' : 'Hide Session History';
 });
 
 startButton.addEventListener('click', startTimer);
 stopButton.addEventListener('click', stopTimer);
 clearHistoryBtn.addEventListener('click', clearSessionHistory);
+if (downloadCsvBtn) { // Check if the button exists before adding listener
+    downloadCsvBtn.addEventListener('click', generateAndDownloadCSV);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  resetForm();
-  renderSessionHistory();
+    resetForm();
+    renderSessionHistory();
 });
 
 
@@ -251,30 +294,26 @@ function generateAndDownloadCSV() {
         return;
     }
 
-    // Re-introducing Start Time and Stop Time headers, but clarifying they are just times
     const headers = ['Agent Name', 'Job No.', 'Job Status', 'Job Difficulty', 'Start Time (HH:MM:SS AM/PM)', 'Stop Time (HH:MM:SS AM/PM)', 'AHT (minutes)'];
     const csv = [headers.join(',')];
 
     session.forEach(row => {
-        // Convert AHT from seconds to minutes
-        const ahtMinutes = (parseFloat(row.ahtSeconds) / 60).toFixed(2); // Convert to minutes and format to 2 decimal places
+        const ahtMinutes = (parseFloat(row.ahtSeconds) / 60).toFixed(2);
 
-        // Extract only the time part from startStr and stopStr
-        // row.startStr and row.stopStr are created using toLocaleString(), which includes date and time.
-        // We'll create new Date objects from these to reliably get just the time.
+        // Ensure these date strings are valid for new Date()
         const startTimeOnly = new Date(row.startStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
         const stopTimeOnly = new Date(row.stopStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
 
-
+        // Wrap each item in quotes for CSV safety, especially if values contain commas
         csv.push([
             row.agentName,
             row.jobNo,
             row.jobStatus,
             row.jobDifficulty,
-            startTimeOnly, // Only the time
-            stopTimeOnly,  // Only the time
-            ahtMinutes     // AHT in minutes
-        ].join(','));
+            startTimeOnly,
+            stopTimeOnly,
+            ahtMinutes
+        ].map(item => `"${String(item).replace(/"/g, '""')}"`).join(',')); // Added String(item) and replace for robust CSV
     });
 
     const blob = new Blob([csv.join('\n')], { type: 'text/csv;charset=utf-8;' });
@@ -313,4 +352,24 @@ function generateAndDownloadCSV() {
 
 
 
-c
+
+// Help button
+// Add these new constant declarations near the top of your JS file,
+// alongside your other document.getElementById calls
+const helpBtn = document.getElementById('helpBtn');
+const helpBox = document.getElementById('helpBox');
+
+
+// Add this new event listener section at the bottom of your JS file,
+// preferably inside the DOMContentLoaded listener or right after other main event listeners.
+helpBtn.addEventListener('click', () => {
+    helpBox.classList.toggle('hidden'); // This will toggle the 'hidden' class
+});
+
+// Optional: Add a way to close the help box if clicking outside of it
+document.addEventListener('click', (event) => {
+    // If the click is not on the help button AND not inside the help box
+    if (helpBox && !helpBox.contains(event.target) && event.target !== helpBtn) {
+        helpBox.classList.add('hidden'); // Hide the help box
+    }
+});
