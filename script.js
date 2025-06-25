@@ -373,3 +373,31 @@ document.addEventListener('click', (event) => {
         helpBox.classList.add('hidden'); // Hide the help box
     }
 });
+
+
+// Add these new constants at the top of your script.js file
+const loaderOverlay = document.getElementById('loader-overlay');
+const mainContent = document.getElementById('main-content');
+
+
+// Modify your existing DOMContentLoaded listener:
+document.addEventListener('DOMContentLoaded', () => {
+    // Hide the loader
+    loaderOverlay.classList.remove('opacity-100'); // Start fade out
+    loaderOverlay.classList.add('opacity-0');
+
+    // After the loader has faded out, remove it and show content
+    loaderOverlay.addEventListener('transitionend', () => {
+        loaderOverlay.remove(); // Remove from DOM after fade completes
+        // Show main content with zoom animation
+        mainContent.classList.remove('opacity-0', 'scale-95'); // Zoom in and fade in
+        mainContent.classList.add('opacity-100', 'scale-100');
+    }, { once: true }); // Ensure this listener only runs once
+
+
+    // Call your existing initialization functions
+    resetForm();
+    renderSessionHistory();
+});
+
+// ... rest of your existing JavaScript code ...
