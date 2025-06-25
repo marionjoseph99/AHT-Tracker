@@ -21,7 +21,7 @@ body {
             padding: 1.5rem;
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
+            gap: 5xp;
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
             justify-content: space-between;
             flex-grow: 1;
@@ -277,3 +277,29 @@ body {
 
 
 
+/* Help button
+/* Custom CSS for a tooltip arrow */
+#helpBox::before {
+    content: '';
+    position: absolute;
+    top: -8px; /* Adjust based on padding */
+    right: 15px; /* Adjust to align with button */
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid #cbd5e0; /* Matches border-gray-300 */
+    /* For shadow */
+    filter: drop-shadow(0 -2px 1px rgba(0,0,0,0.05));
+}
+#helpBox::after { /* Inner arrow for background */
+    content: '';
+    position: absolute;
+    top: -7px; /* Matches top of before, but 1px less for inner */
+    right: 16px; /* 1px less than before to fit inside */
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-bottom: 7px solid white; /* Matches bg-white */
+}
